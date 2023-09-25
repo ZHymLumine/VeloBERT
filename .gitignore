@@ -1,0 +1,7 @@
+*.pyc
+*.csv
+*.DS_Store
+*.txt
+mis/
+3-new-12w-0/
+.idea/
