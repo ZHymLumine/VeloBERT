@@ -1,3 +1,3 @@
-# VeloBERT: DNA Sequence Translation Speed Prediction Project
+# VeloBERT: DNA Sequence Translation Velocity Prediction Project
 
-This repository hosts the project for predicting translation speed from DNA sequences.
+This repository hosts the project for predicting translation velocity from DNA sequences.
