@@ -1,0 +1,1 @@
+python test.py --do_predict --batch_size 1 --max_seq_length 512 --data_dir /home/lr/zym/research/VeloBERT/dataset --model_name_or_path /root/autodl-tmp/CodenBert/DNABERT/codenbert/save/best_loss --output_dir ./save/outputs

@@ -1,0 +1,14 @@
+einops
+rotary-embedding-torch
+tensorboardX
+tensorboard
+transformers
+datasets
+scikit-learn >= 0.22.2
+seqeval
+pyahocorasick
+scipy
+statsmodels
+biopython
+pandas
+pybedtools
