@@ -19,3 +19,9 @@ pip install -e .
 cd scripts
 sh train.sh
 ```
+
+to use codon language model, in `train.sh`, specicy
+
+```bash
+--calm
+```
