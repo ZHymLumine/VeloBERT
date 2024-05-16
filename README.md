@@ -6,15 +6,10 @@ This repository hosts the project for predicting translation velocity from DNA s
 
 ```bash
 git clone https://github.com/ZHymLumine/VeloBERT.git
+cd VeloBERT
 conda create -n velobert python=3.10
 conda activte velobert
 conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
-pip install -r requirements.txt
-```
-
-in VeloBERT folder, run
-
-```bash
 pip install -e .
 ```
 
