@@ -62,21 +62,23 @@ class CodenBert(nn.Module):
         super(CodenBert, self).__init__()
         self.bert = bert_model
         self.args = args
-        # self.hidden_size = self.bert.config.hidden_size
-        ## TODO: CaLM approach
-        self.hidden_size = self.bert.model.args.embed_dim
+        self.calm = args.calm
+        ## NOTE: CaLM approach
+        if self.calm:
+            self.hidden_size = self.bert.model.args.embed_dim
+        else: 
+            self.hidden_size = self.bert.config.hidden_size
         self.regressor = nn.Linear(self.hidden_size, num_labels)
         self.additional_feature_layer = nn.Linear(additional_feature_dim, self.hidden_size)
         self.down_project = nn.Linear(self.hidden_size * 2, self.hidden_size)
         self.relu = nn.ReLU()
 
     def forward(self, input_ids, attention_mask, token_type_ids, additional_features):
-        # outputs = self.bert(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
-        # sequence_output = outputs[0]     # (B, N, 768)
-
-        ## TODO: CaLM approach
-        sequence_output = self.bert.model(input_ids, repr_layers=[12])['representations'][12]
-        
+        ## NOTE : CaLM approach
+        if self.calm:
+            sequence_output = self.bert.model(input_ids, repr_layers=[12])['representations'][12]
+        else:
+            sequence_output = self.bert(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)[0]
         if self.args.use_additional_feature:
             additional_features_output = self.additional_feature_layer(additional_features) # (B, N, 768)
             fused_output = torch.concatenate([sequence_output, additional_features_output], dim=-1)
@@ -548,7 +550,8 @@ def main():
     parser.add_argument("--aa", action="store_true", help="Whether to use amino acid feature.")
     parser.add_argument("--protein", action="store_true", help="Whether to use protein feature")
     parser.add_argument("--ss", action="store_true", help="Whether to use protein structure feature.")
-
+    parser.add_argument("--calm", action="store_true", help="Whether to use codon language model")
+    
     args = parser.parse_args()
     
     if args.aa or args.protein or args.ss:
@@ -640,34 +643,31 @@ def main():
         )
         max_seq_length = args.max_seq_length
         # TODO : model_path
+       
+        if args.calm:
+            bert_model = CaLM()
+            tokenizer = Alphabet.from_architecture("CodonModel")  
+        else:
+            model_path = args.model_name_or_path
+            tokenizer_path = args.model_name_or_path
+            config = AutoConfig.from_pretrained(
+                model_path,
+                num_labels=1,
+                cache_dir=args.cache_dir,
+                output_hidden_states=True,
+            )
 
-        # model_path = 'zhihan1996/DNA_bert_3'
-        # tokenizer_path = 'zhihan1996/DNA_bert_3'
+            tokenizer = AutoTokenizer.from_pretrained(
+                tokenizer_path,
+                cache_dir=args.cache_dir,
+            )
+            bert_model = BertModel.from_pretrained(
+                model_path,
+                config=config,
+                cache_dir=args.cache_dir,
+            )
 
-        model_path = '/home/lr/zym/research/VeloBERT/3-new-12w-0'
-        tokenizer_path = '/home/lr/zym/research/VeloBERT/3-new-12w-0'
-        
-        config = AutoConfig.from_pretrained(
-            model_path,
-            num_labels=1,
-            cache_dir=args.cache_dir,
-            output_hidden_states=True,
-        )
-
-        tokenizer = AutoTokenizer.from_pretrained(
-            tokenizer_path,
-            cache_dir=args.cache_dir,
-        )
-        bert_model = BertModel.from_pretrained(
-            model_path,
-            config=config,
-            cache_dir=args.cache_dir,
-        )
-
-        codon_model = CaLM()
-        tokenizer = Alphabet.from_architecture("CodonModel")
-
-        model = CodenBert(codon_model, num_labels=1, additional_feature_dim=additional_feature_dim, args=args).to(device)
+        model = CodenBert(bert_model, num_labels=1, additional_feature_dim=additional_feature_dim, args=args).to(device)
         total_params = sum(p.numel() for p in model.parameters())
         trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
 
